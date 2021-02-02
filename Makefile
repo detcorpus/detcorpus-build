@@ -109,6 +109,10 @@ meta.db: $(metadatadb)
 .metadata: $(textfiles) $(vertfiles) meta.db
 	echo $(textfiles) | tr ' ' '\n' | while read f ; do sed -i -e "1c $$($(db2meta) -f $$f)" $${f%.*}.vert ; done && touch $@
 
+
+meta.csv: meta.db
+	$(db2meta) -o $@
+
 detcorpus.vert: $(vertfiles) .metadata
 	rm -f $@
 	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
