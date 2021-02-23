@@ -10,10 +10,10 @@ do
     pycorplist="$pycorplist u'$corp', "
 done
 # setup apache dir
-cp /etc/httpd2/conf/sites-available/bonito.conf /etc/httpd2/conf/sites-available/"$corpname".conf
-sed -i "s/bonito\?/$corpname/g" /etc/httpd2/conf/sites-available/"$corpname".conf
+cp /etc/httpd2/conf/sites-available/bonito.conf /etc/httpd2/conf/sites-available/"$corpname"-testing.conf
+sed -i "s,/var/www/bonito\?,/var/www/$corpname," /etc/httpd2/conf/sites-available/"$corpname"-testing.conf
 mkdir -p "$corpdir"
-a2ensite "$corpname"
+a2ensite "$corpname"-testing
 # setup bonito instance
 setupbonito "$corpdir" /var/lib/manatee
 cgifile="$corpdir/run.cgi"

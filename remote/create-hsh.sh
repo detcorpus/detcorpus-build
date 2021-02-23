@@ -12,7 +12,7 @@ else number_opt="--number=1"
 fi
 
 hsh "$number_opt" --initroot --pkg-build-list="basesystem" --no-cache "$hasher_chroot" ; \
-hsh-install "$number_opt" "$hasher_chroot" manatee-open python3-module-gdex bonito-open crystal-open apache2-base iproute2 schedutils
+hsh-install "$number_opt" "$hasher_chroot" manatee-open python3-module-gdex bonito-open crystal-open apache2-base iproute2 schedutils vim-enhanced
 
 cp bin/setup-corpus-environment.sh "$hasher_chroot/chroot/.in/"
 cp bin/setup-bonito.sh "$hasher_chroot/chroot/.in/"
