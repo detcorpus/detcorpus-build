@@ -31,7 +31,8 @@ corpora-detcorpus := detcorpus-fiction detcorpus-nonfiction
 #
 ## SETTINGS
 SHELL := /bin/bash
-.PRECIOUS: %.txt %.conllu
+NPROC := $(shell nproc)
+.PRECIOUS: %.txt %.conllu %.wlda.vert
 #.PHONY: unoconv-listener
 udmodel := data/russian-syntagrus-ud-2.5-191206.udpipe
 numtopics := 100 200 300
@@ -106,7 +107,7 @@ meta.db: $(metadatadb)
 	test -d mrc || mkdir mrc
 	sqlite3 meta.db "select download_link || ' mrc/' || book_id || '.mrc' from books where download_link is not null" | fgrep -v search.rsl | while read link outfile ; do test -f "$$outfile" || wget "$$link" -O "$$outfile" ; done && touch .mrc
 
-.metadata: $(textfiles) $(vertfiles) meta.db
+.metadata: $(textfiles) $(vertfiles) meta.db $(SRC)/genres.csv
 	echo $(textfiles) | tr ' ' '\n' | while read f ; do sed -i -e "1c $$($(db2meta) -f $$f)" $${f%.*}.vert ; done && touch $@
 
 
@@ -133,7 +134,7 @@ export/data/%/word.lex: config/% %.wlda.vert
 	mkdir -p export/vert
 	encodevert -c ./$< -p $(@D) $*.wlda.vert
 	cp $< export/registry
-ifneq ("$(wildcard config/$*.subcorpora)","")
+ifeq ("$(wildcard config/$*.subcorpora)","")
 	echo "no subcorpora defined for $*:: $(wildcard config/$*.subcorpora)"
 else
 	mksubc ./export/registry/$* export/data/$*/subcorp config/$*.subcorpora
@@ -162,9 +163,9 @@ parse: $(vertfiles:.vert=.conllu)
 %.vectors: %.slem
 	mallet import-file --line-regex "^(\S*\t[^\t]*)\t([^\t]*)\t([^\t]*)" --label 3 --name 1 --data 2 --keep-sequence --token-regex "[\p{L}\p{N}-]*\p{L}+" --stoplist-file stopwords.txt --input $< --output $@
 
-lda/model%.mallet: detcorpus.vectors
+lda/model%.mallet lda/summary%.txt: detcorpus.vectors
 	mallet train-topics --input $< --num-topics $* --output-model lda/model$*.mallet \
-		--num-threads 8 --random-seed 987439812 --num-iterations 1000 --num-icm-iterations 20 \
+		--num-threads $(NPROC) --random-seed 987439812 --num-iterations 1000 --num-icm-iterations 20 \
 		--num-top-words 50 --optimize-interval 20 \
 		--output-topic-keys lda/summary$*.txt \
 		--xml-topic-phrase-report lda/topic-phrase$*.xml \
@@ -182,7 +183,7 @@ lda/dtfull%.tsv: lda/model%.mallet
 
 lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 
-%.wlda.vert: %.vert lda $(patsubst %, lda/labels%.txt, $(numtopics))
+%.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
 ## NAMES (for the record)
