@@ -186,6 +186,18 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
+data/%/lemma.counts.tsv: %.vert
+	mkdir -p $(@D)
+	gawk -v col=lemma -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+
+data/%/word.counts.tsv: %.vert
+	mkdir -p $(@D)
+	gawk -v col=word -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+
+data/%/pos.counts.tsv: %.vert
+	mkdir -p $(@D)
+	gawk -v col=pos -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+
 ## NAMES (for the record)
 names:
 	cat lda/doc-topics50.txt | awk '{for (f=4; f<=NF;f++) {if ($f<0.05) {$f=0} else {$f=1}}; print $0}' > lda/doc-topics50i.txt
