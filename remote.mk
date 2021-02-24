@@ -40,12 +40,13 @@ update-corpus:
 
 production: stop-production stop-testing
 	ssh $(HOST) cp bin/testing2production.sh $(TESTING)/chroot/.in/
-	ssh $(HOST) hsh-run --rooter $(TESTING) -- 'sh testing2production.sh $(TESTPORT) $(PRODPORT)'
+	ssh $(HOST) hsh-run --rooter $(TESTING) -- 'sh testing2production.sh $(corpsite) $(TESTPORT) $(PRODPORT)'
 	ssh $(HOST) sh -c 'test -d $(ROLLBACK)/chroot && hsh --clean $(ROLLBACK) || echo empty rollback'
 	ssh $(HOST) hsh --clean $(ROLLBACK) || :
 	ssh $(HOST) rm -rf $(ROLLBACK)
 	ssh $(HOST) mv $(PRODUCTION) $(ROLLBACK)
 	ssh $(HOST) mv $(TESTING) $(PRODUCTION)
+	$(MAKE) start-production
 
 rollback: stop-production
 	$(RSYNC) remote/testing2production.sh $(HOST):$(PRODUCTION)/chroot/.in/
