@@ -195,15 +195,15 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 
 data/%/lemma.counts.tsv: %.vert
 	mkdir -p $(@D)
-	gawk -v col=lemma -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+	gawk -v col=lemma -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
 
 data/%/word.counts.tsv: %.vert
 	mkdir -p $(@D)
-	gawk -v col=word -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+	gawk -v col=word -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
 
 data/%/pos.counts.tsv: %.vert
 	mkdir -p $(@D)
-	gawk -v col=pos -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+	gawk -v col=pos -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
 
 data: $(datafiles)
 
