@@ -42,6 +42,7 @@ metadatadb=$(SRC)/metadata.sql
 gitsrc=git --git-dir=$(SRC)/.git/
 db2meta=python3 scripts/db2meta.py --dbfile=meta.db --genres=$(SRC)/genres.csv
 udpiper := PYTHONPATH=../udpiper python3 ../udpiper/bin/udpiper 
+UNOCONV := .unoconv-listener
 
 ## HARDCODED FILELIST TWEAKS
 duplicatesrc := $(shell $(gitsrc) ls-files dups)
@@ -56,6 +57,9 @@ srcfb2files := $(filter %.fb2, $(srcfiles))
 srcepubfiles := $(filter %.epub, $(srcfiles))
 textfiles := $(srctxtfiles) $(srcfb2files) $(srchtmlfiles) $(srcepubfiles)
 vertfiles := $(srcfb2files:.fb2=.vert) $(srctxtfiles:.txt=.vert) $(srchtmlfiles:.html=.vert) $(srcepubfiles:.epub=.vert)
+# DATA
+datatypes := pos lemma word
+datafiles := $(foreach corpus, $(corpora-detcorpus), $(patsubst %, data/$(corpus)/%.counts.tsv, $(datatypes)))
 
 help:
 	 @echo 'Makefile for building detcorpus                                           '
@@ -77,7 +81,13 @@ include remote.mk
 print-%:
 	@echo $(info $*=$($*))
 
-%.txt: %.fb2 | unoconv-listener
+$(UNOCONV):
+	unoconv --listener & 
+	sleep 10
+	touch $@
+
+
+%.txt: %.fb2 | $(UNOCONV)
 	test -d $(@D) || mkdir -p $(@D)
 	unoconv -n -f txt -e encoding=utf8 -o $@ $< || pandoc -t plain -o $@ $<
 
@@ -145,9 +155,6 @@ export/detcorpus.tar.xz: $(compiled)
 	rm -f $@
 	bash -c "pushd export ; tar cJvf detcorpus.tar.xz --mode='a+r' * ; popd"
 
-unoconv-listener:
-	unoconv --listener &
-	sleep 10
 
 compile: $(compiled)
 
@@ -197,6 +204,9 @@ data/%/word.counts.tsv: %.vert
 data/%/pos.counts.tsv: %.vert
 	mkdir -p $(@D)
 	gawk -v col=pos -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,3 -k5,5nr > $@
+
+data: $(datafiles)
+
 
 ## NAMES (for the record)
 names:
