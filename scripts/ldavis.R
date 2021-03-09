@@ -1,5 +1,7 @@
 options(java.parameters = "-Xmx4096m")
 library(rJava)
+# install_github("mimno/RMallet/mallet")
+# mallet version with mallet.topic.load function is required
 library(mallet)
 library(LDAvis)
 library(readr)
