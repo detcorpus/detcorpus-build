@@ -159,6 +159,7 @@ export/detcorpus.tar.xz: $(compiled)
 compile: $(compiled)
 
 convert: $(vertfiles:.vert=.txt) 
+	rm -f $(UNOCONV)
 
 parse: $(vertfiles:.vert=.conllu)
 
@@ -192,6 +193,19 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
+
+## LDAVis
+
+%.vocab.txt: %.vectors
+	mallet info --input $< --print-feature-counts > $@
+
+lda/vis%/lda.json: lda/model%.mallet detcorpus.vocab.txt
+	mkdir -p lda/vis%/
+	Rscript scripts/ldavis.R -m $< -v detcorpus.vocab.txt -o lda/vis%
+
+ldavis: $(patsubst %, lda/vis%/lda.json, $(numtopics))
+
+## Data
 
 data/%/lemma.counts.tsv: %.vert
 	mkdir -p $(@D)
