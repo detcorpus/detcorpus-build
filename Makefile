@@ -221,6 +221,12 @@ data/%/pos.counts.tsv: %.vert
 
 data: $(datafiles)
 
+data/text/%.vert: %.vert
+	test -d $(@D) || mkdir -p $(@D)
+	python3 scripts/shuffle_vert.py $< $@
+
+reshuffled: $(patsubst [12][0-9][0-9][0-9]s/%,data/text/%,$(vertfiles))
+
 
 ## NAMES (for the record)
 names:
