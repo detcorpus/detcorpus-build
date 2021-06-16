@@ -128,7 +128,7 @@ class MetaDB(object):
         return '{last}, {first} {middle}'.format(**author)
 
     def generate_id(self, filename):
-        m = re.search('[0-9]+s/([^.]+\.[^.]+).*', filename)
+        m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)([12][09][0-9][0-9])', filename)
         return m.group(1)
 
     def format_docheader(self, metad):
