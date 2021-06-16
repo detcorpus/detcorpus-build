@@ -11,6 +11,7 @@ def parse_arguments():
                         default='-', help=".vert file to be processed")
     parser.add_argument('outfile', type=argparse.FileType('w'), default='-',
                         help="Output file")
+    parser.add_argument('-r', '--random', help="Value for a random seed to use")
     return parser.parse_args()
 
 
@@ -67,8 +68,8 @@ class Fragment(object):
             out.append(s)
         return out
 
-    def shuffle_sent(self):
-        random.shuffle(self.sentences)
+    def shuffle_sent(self, seed=None):
+            random.Random(seed).shuffle(self.sentences)
 
     def __str__(self):
         sents = []
@@ -82,7 +83,7 @@ def main():
     doc = Doc(args.infile)
     args.outfile.write(doc.header)
     for f in doc.iter_fragments():
-        f.shuffle_sent()
+        f.shuffle_sent(args.random)
         args.outfile.write(str(f))
     args.outfile.write(doc.footer)
 

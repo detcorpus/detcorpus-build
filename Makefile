@@ -37,6 +37,9 @@ NPROC := $(shell nproc)
 udmodel := data/russian-syntagrus-ud-2.5-191206.udpipe
 numtopics := 100 200 300
 metadatadb=$(SRC)/metadata.sql
+randomseed := $(SRC)/random.seed
+random := $(file <$(randomseed))
+
 
 ## UTILS
 gitsrc=git --git-dir=$(SRC)/.git/
@@ -60,6 +63,7 @@ vertfiles := $(srcfb2files:.fb2=.vert) $(srctxtfiles:.txt=.vert) $(srchtmlfiles:
 # DATA
 datatypes := pos lemma word
 datafiles := $(foreach corpus, $(corpora-detcorpus), $(patsubst %, data/$(corpus)/%.counts.tsv, $(datatypes)))
+shuffled := $(addprefix data/text/, $(vertfiles))
 
 help:
 	 @echo 'Makefile for building detcorpus                                           '
@@ -117,7 +121,7 @@ meta.db: $(metadatadb)
 	test -d mrc || mkdir mrc
 	sqlite3 meta.db "select download_link || ' mrc/' || book_id || '.mrc' from books where download_link is not null" | fgrep -v search.rsl | while read link outfile ; do test -f "$$outfile" || wget "$$link" -O "$$outfile" ; done && touch .mrc
 
-.metadata: $(textfiles) $(vertfiles) meta.db $(SRC)/genres.csv
+.metadata: $(textfiles) $(vertfiles) meta.db $(SRC)/genres.csv scripts/db2meta.py
 	echo $(textfiles) | tr ' ' '\n' | while read f ; do sed -i -e "1c $$($(db2meta) -f $$f)" $${f%.*}.vert ; done && touch $@
 
 
@@ -221,12 +225,15 @@ data/%/pos.counts.tsv: %.vert
 
 data: $(datafiles)
 
-data/text/%.vert: %.vert
+data/text/%.vert: %.vert $(randomseed)
 	test -d $(@D) || mkdir -p $(@D)
-	python3 scripts/shuffle_vert.py $< $@
+	python3 scripts/shuffle_vert.py -r $(random) $< $@
 
-reshuffled: $(patsubst [12][0-9][0-9][0-9]s/%,data/text/%,$(vertfiles))
+reshuffled: $(shuffled)
+	zip -r -D texts.zip data/text/
 
+lda.zip: lda
+	zip -r lda.zip lda/*.txt lda/*.xml
 
 ## NAMES (for the record)
 names:
