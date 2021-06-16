@@ -6,6 +6,7 @@ import argparse
 import csv
 import re
 import html
+import sys
 from collections import defaultdict
 
 def get_year(s_year):
@@ -129,7 +130,16 @@ class MetaDB(object):
 
     def generate_id(self, filename):
         m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)([12][09][0-9][0-9])', filename)
-        return m.group(1)
+        try:
+            return m.group(1)
+        except AttributeError:
+            sys.stderr.write("Problem generating id: %s\n" % filename)
+            m = re.search('[0-9]+s/([^.]+\.[^.]+).*', filename)
+            if m:
+                return m.group(1)
+            else:
+                return "NOID"
+
 
     def format_docheader(self, metad):
         values = []
