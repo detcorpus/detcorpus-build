@@ -95,6 +95,7 @@ class MetaDB(object):
         except (KeyError):
             metad.update(self.fallback_years(filename))
         metad['genre'] = self._genres[filename]
+        metad['filename'] = filename
         return metad
 
     def get_filenames(self):
@@ -170,6 +171,8 @@ def parse_arguments():
     parser.add_argument('-g', '--genres', help='genres.csv file')
     parser.add_argument('-f', '--filename', help='return metadata for a given filename')
     parser.add_argument('-o', '--outfile', help='output all metadata as CSV table')
+    parser.add_argument('--dataset', action='store_true',
+            help='output metadata table in format tailored for dataset publication')
     return parser.parse_args()
 
 def main():
@@ -181,11 +184,15 @@ def main():
         del meta_db
     elif args.outfile:
         fs = meta_db.get_filenames()
-        fieldnames = ['id', 'year', 'edition_year', 'genre', 'publisher', 'author_name', 'booktitle', 'city', 'author_sex',
-                       'author_death_year', 'uuid', 'title', 'author', 'author_birth_year', 'realname', 'colophon', 'sourcetitle',
-					   'firstprint_description', 'edition']
+        if args.dataset:
+            fieldnames = ['filename', 'author', 'realname', 'author_birth_year', 'author_death_year', 'author_sex',
+                    'title', 'year', 'firstprint_description', 'edition_year', 'edition', 'genre', 'id']
+        else:
+            fieldnames = ['filename', 'id', 'year', 'edition_year', 'genre', 'publisher', 'author_name', 'booktitle', 'city', 'author_sex',
+                           'author_death_year', 'uuid', 'title', 'author', 'author_birth_year', 'realname', 'colophon', 'sourcetitle',
+                                               'firstprint_description', 'edition']
         with open(args.outfile, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames)
+            writer = csv.DictWriter(csvfile, fieldnames, extrasaction='ignore')
             writer.writeheader()
             for f in fs:
                 try:
@@ -195,6 +202,7 @@ def main():
                 for k, v in metad.items():
                     if isinstance(v, list):
                         metad[k] = ';'.join(str(i) for i in v)
+                metad['filename'] = f
                 writer.writerow(metad) 
 
 if __name__ == '__main__':

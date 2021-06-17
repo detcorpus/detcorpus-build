@@ -125,8 +125,11 @@ meta.db: $(metadatadb)
 	echo $(textfiles) | tr ' ' '\n' | while read f ; do sed -i -e "1c $$($(db2meta) -f $$f)" $${f%.*}.vert ; done && touch $@
 
 
-meta.csv: meta.db
+meta.csv: meta.db scripts/db2meta.py
 	$(db2meta) -o $@
+
+metadata.csv: meta.db scripts/db2meta.py
+	$(db2meta) -o $@ --dataset
 
 detcorpus.vert: $(vertfiles) .metadata
 	rm -f $@
