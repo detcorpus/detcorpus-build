@@ -190,6 +190,9 @@ lda/model%.mallet lda/summary%.txt: detcorpus.vectors
 lda/state%.gz: lda/model%.mallet
 	mallet train-topics --input-model $< --no-inference --output-state $@
 
+lda/state%: lda/state%.gz
+	gunzip $<
+
 lda/labels%.txt: lda/summary%.txt
 	sort -nr -k2 -t"	" $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
 
@@ -200,6 +203,17 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
+
+lda/state.all: $(patsubst %,lda/state%,$(numtopics))
+	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > state.all
+
+lda/state.labeled: lda/state.all
+	gawk -f scripts/topic_labels.awk $(patsubst %,lda/labels%.txt,$(numtopics)) $< > $@
+
+states: lda/doc-topics100.txt lda/state.labeled 
+	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
+
+
 
 ## LDAVis
 
