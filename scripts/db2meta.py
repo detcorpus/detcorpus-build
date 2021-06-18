@@ -202,7 +202,7 @@ def main():
                 for k, v in metad.items():
                     if isinstance(v, list):
                         metad[k] = ';'.join(str(i) for i in v)
-                metad['filename'] = f
+                metad['filename'] = re.sub("\.[^.]+$", ".vert", f)
                 writer.writerow(metad) 
 
 if __name__ == '__main__':
