@@ -248,7 +248,7 @@ data/text/%.vert: %.vert $(randomseed)
 
 texts.zip: $(shuffled)
 	rm -f $@
-	rm -f $(filter-out $(shuffled),$(wildcard data/text/*))
+	rm -f $(filter-out $(shuffled),$(wildcard data/text/*s/*))
 	zip -r -D $@ data/text/
 
 lda.zip: lda
@@ -263,6 +263,8 @@ test-dataset: test-metadata
 test-metadata: metadata.csv texts.zip
 	python3 test/metadata.py
 
+test-lda: metadata.csv lda
+	python3 test/lda.py
 
 ## NAMES (for the record)
 names:
