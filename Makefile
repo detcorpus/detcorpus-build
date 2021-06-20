@@ -178,7 +178,7 @@ parse: $(vertfiles:.vert=.conllu)
 %.vectors: %.slem
 	mallet import-file --line-regex "^(\S*\t[^\t]*)\t([^\t]*)\t([^\t]*)" --label 3 --name 1 --data 2 --keep-sequence --token-regex "[\p{L}\p{N}-]*\p{L}+" --stoplist-file stopwords.txt --input $< --output $@
 
-lda/model%.mallet lda/summary%.txt: detcorpus.vectors
+lda/model%.mallet lda/summary%.txt lda/doc-topics%.txt lda/topic-phrase%.xml lda/diag%.xml: detcorpus.vectors
 	mallet train-topics --input $< --num-topics $* --output-model lda/model$*.mallet \
 		--num-threads $(NPROC) --random-seed 987439812 --num-iterations 1000 --num-icm-iterations 20 \
 		--num-top-words 50 --optimize-interval 20 \
@@ -258,12 +258,12 @@ lda.zip: lda
 
 test: test-dataset
 
-test-dataset: test-metadata
+test-dataset: test-metadata test-lda
 
 test-metadata: metadata.csv texts.zip
 	python3 test/metadata.py
 
-test-lda: metadata.csv lda
+test-lda: metadata.csv $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 test/lda.py
 
 ## NAMES (for the record)
