@@ -246,11 +246,23 @@ data/text/%.vert: %.vert $(randomseed)
 	test -d $(@D) || mkdir -p $(@D)
 	python3 scripts/shuffle_vert.py -r $(random) $< $@
 
-reshuffled: $(shuffled)
-	zip -r -D texts.zip data/text/
+texts.zip: $(shuffled)
+	rm -f $@
+	rm -f $(filter-out $(shuffled),$(wildcard data/text/*))
+	zip -r -D $@ data/text/
 
 lda.zip: lda
 	zip -r lda.zip lda/*.txt lda/*.xml
+
+## TESTS
+
+test: test-dataset
+
+test-dataset: test-metadata
+
+test-metadata: metadata.csv texts.zip
+	python3 test/metadata.py
+
 
 ## NAMES (for the record)
 names:
