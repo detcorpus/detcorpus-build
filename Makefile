@@ -205,7 +205,7 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
 lda/state.all: $(patsubst %,lda/state%,$(numtopics))
-	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > $@
+	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<lda/state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<lda/state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<lda/state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > $@
 
 lda/state.labeled: lda/state.all
 	gawk -f scripts/topic_labels.awk $(patsubst %,lda/labels%.txt,$(numtopics)) $< > $@
