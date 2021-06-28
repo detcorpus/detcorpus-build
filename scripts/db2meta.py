@@ -7,6 +7,7 @@ import csv
 import re
 import html
 import sys
+import os
 from collections import defaultdict
 
 def get_year(s_year):
@@ -191,8 +192,8 @@ def main():
             fieldnames = ['filename', 'id', 'year', 'edition_year', 'genre', 'publisher', 'author_name', 'booktitle', 'city', 'author_sex',
                            'author_death_year', 'uuid', 'title', 'author', 'author_birth_year', 'realname', 'colophon', 'sourcetitle',
                                                'firstprint_description', 'edition']
-        with open(args.outfile, 'w') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames, extrasaction='ignore')
+        with open(args.outfile, 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames, extrasaction='ignore', lineterminator=os.linesep)
             writer.writeheader()
             for f in fs:
                 try:
