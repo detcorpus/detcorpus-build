@@ -32,7 +32,7 @@ corpora-detcorpus := detcorpus-fiction detcorpus-nonfiction
 ## SETTINGS
 SHELL := /bin/bash
 NPROC := $(shell nproc)
-.PRECIOUS: %.txt %.conllu %.wlda.vert
+.PRECIOUS: %.txt %.conllu %.wlda.vert detcorpus.vocab.txt
 #.PHONY: unoconv-listener
 udmodel := data/russian-syntagrus-ud-2.5-191206.udpipe
 numtopics := 100 200 300
@@ -205,12 +205,15 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
 lda/state.all: $(patsubst %,lda/state%,$(numtopics))
-	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > state.all
+	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > $@
 
 lda/state.labeled: lda/state.all
 	gawk -f scripts/topic_labels.awk $(patsubst %,lda/labels%.txt,$(numtopics)) $< > $@
 
-states: lda/doc-topics100.txt lda/state.labeled 
+filename-id.txt: metadata.csv
+	gawk -f scripts/match_filename_to_ids.awk $< > $@
+
+$(vertfiles:.vert=.state.vert): lda/doc-topics100.txt filename-id.txt lda/state.labeled
 	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
 
 
@@ -221,8 +224,8 @@ states: lda/doc-topics100.txt lda/state.labeled
 	mallet info --input $< --print-feature-counts > $@
 
 lda/vis%/lda.json: lda/model%.mallet detcorpus.vocab.txt
-	mkdir -p lda/vis%/
-	Rscript scripts/ldavis.R -m $< -v detcorpus.vocab.txt -o lda/vis%
+	mkdir -p lda/vis$*/
+	Rscript scripts/ldavis.R -m $< -v detcorpus.vocab.txt -o lda/vis$*
 
 ldavis: $(patsubst %, lda/vis%/lda.json, $(numtopics))
 
