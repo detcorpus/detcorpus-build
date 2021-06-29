@@ -135,15 +135,19 @@ detcorpus.vert: $(vertfiles) .metadata
 	rm -f $@
 	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
 
-detcorpus-nonfiction.vert: detcorpus.vert
+detcorpus.wstate.vert: $(vertfiles:.vert=.wstate.vert)
+	rm -f $@
+	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
+
+detcorpus-nonfiction.vert: detcorpus.wstate.vert
 	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $@
 
-detcorpus-fiction.vert: detcorpus.vert
+detcorpus-fiction.vert: detcorpus.wstate.vert
 	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $@
 
 conllu: $(vertfiles:.vert=.conllu)
 
-export/data/%/word.lex: config/% %.wlda.vert
+export/data/%/word.lex: config/% %.vert
 	rm -rf export/data/$*
 	rm -f export/registry/$*
 	mkdir -p $(@D)
@@ -191,7 +195,7 @@ lda/state%.gz: lda/model%.mallet
 	mallet train-topics --input-model $< --no-inference --output-state $@
 
 lda/state%: lda/state%.gz
-	gunzip $<
+	gunzip -f $<
 
 lda/labels%.txt: lda/summary%.txt
 	sort -nr -k2 -t"	" $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
@@ -216,7 +220,8 @@ filename-id.txt: metadata.csv
 $(vertfiles:.vert=.state.vert): lda/doc-topics100.txt filename-id.txt lda/state.labeled
 	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
 
-
+%.wstate.vert: %.state.vert %.wlda.vert
+	gawk -f scripts/state_merger.awk $^ > $@
 
 ## LDAVis
 
