@@ -215,7 +215,7 @@ lda/state.labeled: lda/state.all
 	gawk -f scripts/topic_labels.awk $(patsubst %,lda/labels%.txt,$(numtopics)) $< > $@
 
 filename-id.txt: metadata.csv
-	gawk -f scripts/match_filename_to_ids.awk $< > $@
+	cat $< | sed 's/""/\&quot;/g' | gawk -f scripts/match_filename_to_ids.awk > $@
 
 $(vertfiles:.vert=.state.vert): lda/doc-topics100.txt filename-id.txt lda/state.labeled
 	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
