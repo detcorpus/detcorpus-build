@@ -135,14 +135,14 @@ detcorpus.vert: $(vertfiles) .metadata
 	rm -f $@
 	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
 
-detcorpus.wstate.vert: $(vertfiles:.vert=.wstate.vert)
+detcorpus.ws.vert: $(vertfiles:.vert=.wstate.vert)
 	rm -f $@
 	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
 
-detcorpus-nonfiction.vert: detcorpus.wstate.vert
+detcorpus-nonfiction.vert: detcorpus.ws.vert
 	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $@
 
-detcorpus-fiction.vert: detcorpus.wstate.vert
+detcorpus-fiction.vert: detcorpus.ws.vert
 	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $@
 
 conllu: $(vertfiles:.vert=.conllu)
@@ -170,6 +170,7 @@ export/detcorpus.tar.xz: $(compiled)
 compile: $(compiled)
 
 convert: $(vertfiles:.vert=.txt) 
+	killall unoconv
 	rm -f $(UNOCONV)
 
 parse: $(vertfiles:.vert=.conllu)
@@ -217,7 +218,7 @@ lda/state.labeled: lda/state.all
 filename-id.txt: metadata.csv
 	cat $< | sed 's/""/\&quot;/g' | gawk -f scripts/match_filename_to_ids.awk > $@
 
-$(vertfiles:.vert=.state.vert): lda/doc-topics100.txt filename-id.txt lda/state.labeled
+$(vertfiles:.vert=.state.vert) &: lda/doc-topics100.txt filename-id.txt lda/state.labeled
 	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
 
 %.wstate.vert: %.state.vert %.wlda.vert
