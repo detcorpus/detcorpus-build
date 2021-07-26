@@ -153,7 +153,7 @@ export/data/%/word.lex: config/% %.vert
 	mkdir -p $(@D)
 	mkdir -p export/registry
 	mkdir -p export/vert
-	encodevert -c ./$< -p $(@D) $*.wlda.vert
+	encodevert -c ./$< -p $(@D) $*.vert
 	cp $< export/registry
 ifeq ("$(wildcard config/$*.subcorpora)","")
 	echo "no subcorpora defined for $*:: $(wildcard config/$*.subcorpora)"
