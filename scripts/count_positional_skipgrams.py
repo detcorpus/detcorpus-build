@@ -11,6 +11,11 @@ class Skipgram(namedtuple('Skipgram', ['w', 'c', 'p'])):
     def __str__(self):
         return '%s\t%s:%d' % self
 
+    @property
+    def tagstr(self):
+        return '%s:%d' % (self.c, self.p)
+        
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Count positional skipgrams in a .vert file')
@@ -25,6 +30,8 @@ def main():
     right = deque(maxlen=args.window)
     left = deque(maxlen=args.window)
     ngrams = Counter()
+    words = Counter()
+    collocates = Counter()
     
     with open(args.vertfile, 'r') as vert:
         for line in vert:
@@ -34,17 +41,20 @@ def main():
                     continue
                 sg = Skipgram(w=fs[1], c=fs[2], p=0)
                 ngrams[sg] += 1
+                words[fs[1]] += 1
                 for ri, rc in enumerate(right, start=1):
                     sg = Skipgram(w=rc, c=fs[2], p=ri)
                     ngrams[sg] += 1
+                    collocates[sg.tagstr] += 1
                 for li, lc in enumerate(left, start=1):
                     sg = Skipgram(w=fs[1], c=lc, p=-li)
                     ngrams[sg] += 1
+                    collocates[sg.tagstr] += 1
                 right.appendleft(fs[1])
                 left.appendleft(fs[2])
 
     for ng, f in ngrams.most_common():
-        print('%s\t%s' % (str(ng), str(f)))
+        print('\t'.join([ng.w, ng.tagstr, str(words[ng.w]), str(collocates[ng.tagstr]), str(f)]))
 
 if __name__ == '__main__':
     main()
