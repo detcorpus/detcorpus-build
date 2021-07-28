@@ -42,6 +42,7 @@ def main():
                 sg = Skipgram(w=fs[1], c=fs[2], p=0)
                 ngrams[sg] += 1
                 words[fs[1]] += 1
+                collocates[sg.tagstr] += 1
                 for ri, rc in enumerate(right, start=1):
                     sg = Skipgram(w=rc, c=fs[2], p=ri)
                     ngrams[sg] += 1
