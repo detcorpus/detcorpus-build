@@ -263,6 +263,19 @@ texts.zip: $(shuffled)
 lda.zip: lda
 	zip -r lda.zip lda/*.txt lda/*.xml
 
+
+## Skipgrams
+
+%.skipgrams: %.vert scripts/count_positional_skipgrams.py
+	python3 scripts/count_positional_skipgrams.py $< > $@
+
+count-skipgrams: $(vertfiles:.vert=.skipgrams) 
+
+detcorpus.skipgrams: count-skipgrams
+	$(file > $@.in) $(foreach skipfile,$(vertfiles:.vert=.skipgrams), $(file >> $@.in,$(skipfile)))
+	cat $@.in | while read f ; do echo "FILENAME $$f"; cat $$f ; done | python3 scripts/aggregate_skipgrams.py > $@
+	rm -f $@.in
+
 ## TESTS
 
 test: test-dataset
