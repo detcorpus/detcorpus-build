@@ -21,6 +21,9 @@ ATTRIBUTE variable {
     MULTIVALUE yes
     MULTISEP "|"
 }
+ATTRIBUTE lda100
+ATTRIBUTE lda200
+ATTRIBUTE lda300
 
 STRUCTURE doc {
     ATTRIBUTE genre {
