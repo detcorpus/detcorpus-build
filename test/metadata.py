@@ -55,6 +55,14 @@ class MetadataIntegrityTestCase(unittest.TestCase):
             with self.subTest(f=f):
                 self.assertTrue(f.endswith(".vert"))
 
+    def test_year_matches_decade_dir(self):
+        """check that year corresponds to filename's decade dir"""
+        for i, row in self.df.iterrows():
+            f = row['filename']
+            year = row['year']
+            with self.subTest(f=f):
+                self.assertEqual(int(f[:3]), int(year) // 10, msg='year/decade dir mismatch: %s — %d' % (f, year))
+
     def test_unique_ids(self):
         """check that there's no duplicate values in the id column"""
         dups = self.df['id'][self.df['id'].duplicated()]
