@@ -1,5 +1,5 @@
 BEGIN { OFS = "\t"; model_n = 1 }
 
-{ while ( model_n <= 3 ) { if ( NR==FNR ) { labels[$2,model_n] = $3; next } else { model_n += 1; NR = 0; FNR = 0 } } }
+{ while ( model_n <= ARGC - 2 ) { if ( NR==FNR ) { labels[$1,model_n] = $3; next } else { model_n += 1; NR = 0; FNR = 0 } } }
 $1 ~ /#/ { next }
-{ print $1, $2, $3, $4, $5, $6 "_" labels[$6,1], $7 "_" labels[$7,2], $8 "_" labels[$8,3] }
+{ out = $1 OFS $2 OFS $3 OFS $4 OFS $5; for ( i = 6; i <= NF; i++ ) { out = out OFS $i "_" labels[$i,i-5] }; print out }
