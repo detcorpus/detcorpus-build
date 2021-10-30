@@ -3,6 +3,7 @@
 
 import sys
 import re
+import string
 import xml.etree.cElementTree as e
 from collections import defaultdict
 
@@ -25,7 +26,20 @@ def parse_grammemes(attr):
     return d
 
 
+def tokenize_tail(tail, ispunct):
+    """split non-word data left out by mystem into tokens"""
+    toklist = re.split("\\s+", tail)
+    for tok in filter(None, toklist):
+        if ispunct.match(tok):
+            t = defaultdict(str, word=tok, tag='c', lemma=tok)
+        elif re.match("\\d+", tok):
+            t = defaultdict(str, word=tok, tag='NUM', lemma=tok)
+        else:
+            t = defaultdict(str, word=tok, tag='UNK', lemma=tok)
+        yield t
+
 def print_token(fields):
+    """format token dict as a row for a vert file"""
     s = u'{f[word]}\t{f[lemma]}\t{f[tag]}\t{f[const]}\t{f[var]}\n'.format(f=fields)
     sys.stdout.write(s)
 
@@ -47,6 +61,7 @@ def print_footer():
 
 
 def main():
+    ispunct = re.compile("[{}]+$".format(re.escape(string.punctuation + '—«»„“”‘’')))
     fragsize = 500
     itoken = 0
     fragid = 1
@@ -72,11 +87,12 @@ def main():
             except AttributeError:
                 tail = None
             if tail:
-                print_token(defaultdict(str, word=tail, tag='c', lemma=tail))
-                itoken += 1
-                if (itoken % fragsize) == 0:
-                    fragid += 1
-                    sys.stdout.write("</f>\n<f id={}>\n".format(fragid))
+                for tok in tokenize_tail(tail, ispunct):
+                    print_token(tok)
+                    itoken += 1
+            if (itoken % fragsize) == 0:
+                fragid += 1
+                sys.stdout.write("</f>\n<f id={}>\n".format(fragid))
     print_footer()
 
 
