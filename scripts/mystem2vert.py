@@ -61,7 +61,7 @@ def print_footer():
 
 
 def main():
-    ispunct = re.compile("[{}]+$".format(re.escape(string.punctuation + '—«»„“”‘’')))
+    ispunct = re.compile("[{}]+$".format(re.escape(string.punctuation + '—«»„“”‘’…–')))
     fragsize = 500
     itoken = 0
     fragid = 1
