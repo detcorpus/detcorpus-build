@@ -111,7 +111,7 @@ $(UNOCONV):
 
 %.vert: %.txt
 	test -d $(@D) || mkdir -p $(@D)
-	mystem -n -d -i -g -c -s --format xml $< | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
+	 sed 's/<pb n="\([0-9]\+\)"\/\?>/PB\1/g' $< | mystem -n -d -i -g -c -s --format xml | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
 
 meta.db: $(metadatadb)
 	test -f $@ && rm -f $@ || :
