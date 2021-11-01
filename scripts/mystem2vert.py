@@ -30,8 +30,9 @@ def parse_grammemes(attr):
 
 class Tokenizer(object):
     def __init__(self):
-        self.ispunct = re.compile("[{}]+$".format(re.escape(string.punctuation +
-                                                            '—«»„“”‘’…–')))
+        self.punct = '.,!?()":;—«»„“”‘’…–-'
+        self.ispunct = re.compile("[{}]+$".format(re.escape(self.punct)))
+        self.isnum = re.compile("[0-9]+")
         """workaround that helps hide page breaking tags from mystem"""
         self.ispagebreak = re.compile('PB[0-9]+')
 
@@ -42,8 +43,8 @@ class Tokenizer(object):
 
     def tokenize_tail(self, tail):
         """split non-word data left out by mystem into tokens"""
-        toklist = re.split("\\s+", tail)
-        for tok in filter(None, toklist):
+        toklist = re.split("([{}]+|\\s+)".format(re.escape(self.punct)), tail)
+        for tok in filter(lambda s: bool(s) and not str.isspace(s), toklist):
             if self.ispagebreak.match(tok):
                 t = defaultdict(str, word=self.make_pagebreak_tag(tok))
             elif self.ispunct.match(tok):
