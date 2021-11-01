@@ -33,7 +33,6 @@ corpora-detcorpus := detcorpus-fiction detcorpus-nonfiction
 SHELL := /bin/bash
 NPROC := $(shell nproc)
 .PRECIOUS: %.txt %.conllu %.wlda.vert detcorpus.vocab.txt
-#.PHONY: unoconv-listener
 udmodel := data/russian-syntagrus-ud-2.5-191206.udpipe
 numtopics := 100 200 300
 metadatadb=$(SRC)/metadata.sql
@@ -45,7 +44,6 @@ random := $(file <$(randomseed))
 gitsrc=git --git-dir=$(SRC)/.git/
 db2meta=python3 scripts/db2meta.py --dbfile=meta.db --genres=$(SRC)/genres.csv
 udpiper := PYTHONPATH=../udpiper python3 ../udpiper/bin/udpiper 
-UNOCONV := .unoconv-listener
 
 ## HARDCODED FILELIST TWEAKS
 duplicatesrc := $(shell $(gitsrc) ls-files dups)
@@ -71,7 +69,7 @@ help:
 	 @echo 'Corpus texts source files are expected to be found at: $(SRC)             '
 	 @echo '                                                                          '
 	 @echo '                                                                          '
-	 @echo 'Dependencies: git, python, unoconv, w3m, awk, mystem,                     '
+	 @echo 'Dependencies: git, python, w3m, awk, mystem,                     '
 	 @echo '              manatee-open, pandoc                                        '
 	 @echo '                                                                          '
 	 @echo 'Usage:                                                                    '
@@ -85,15 +83,9 @@ include remote.mk
 print-%:
 	@echo $(info $*=$($*))
 
-$(UNOCONV):
-	unoconv --listener & 
-	sleep 10
-	touch $@
-
-
-%.txt: %.fb2 | $(UNOCONV)
+%.txt: %.fb2 
 	test -d $(@D) || mkdir -p $(@D)
-	unoconv -n -f txt -e encoding=utf8 -o $@ $< || pandoc -t plain -o $@ $<
+	pandoc -t plain -o $@ $<
 
 %.txt: %.epub
 	pandoc -o $@ $<
@@ -109,9 +101,10 @@ $(UNOCONV):
 	test -d $(@D) || mkdir -p $(@D)
 	w3m -dump $< | mystem -n -d -i -g -c -s --format xml $< | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
 
-%.vert: %.txt
+%.vert: %.txt scripts/mystem2vert.py
 	test -d $(@D) || mkdir -p $(@D)
-	 sed 's/<pb n="\([0-9]\+\)"\/\?>/PB\1/g' $< | mystem -n -d -i -g -c -s --format xml | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
+	sed -e 's/<pb n="\([0-9]\+\)"\/\?>/ PB\1/g' \
+		-e 's/&#769;//g' -e 's/&#8209;|‑/-/g' $< | mystem -n -d -i -g -c -s --format xml | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
 
 meta.db: $(metadatadb)
 	test -f $@ && rm -f $@ || :
@@ -170,8 +163,6 @@ export/detcorpus.tar.xz: $(compiled)
 compile: $(compiled)
 
 convert: $(vertfiles:.vert=.txt) 
-	killall unoconv
-	rm -f $(UNOCONV)
 
 parse: $(vertfiles:.vert=.conllu)
 
