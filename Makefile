@@ -97,13 +97,10 @@ print-%:
 %.conllu: %.txt
 	udpipe --tokenize --tag --parse --output=conllu --outfile=$@ $(udmodel) $<  
 
-%.vert: %.html
-	test -d $(@D) || mkdir -p $(@D)
-	w3m -dump $< | mystem -n -d -i -g -c -s --format xml $< | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
-
 %.vert: %.txt scripts/mystem2vert.py
 	test -d $(@D) || mkdir -p $(@D)
 	sed -e 's/<pb n="\([0-9]\+\)"\/\?>/ PB\1/g' \
+		-e "s/\(\w\+\)'\(\w\+\)/\1ъ\2/g" \
 		-e 's/&#769;//g' -e 's/&#8209;|‑/-/g' $< | mystem -n -d -i -g -c -s --format xml | sed 's/[^[:print:]]//g' | python3 scripts/mystem2vert.py $@ > $@
 
 meta.db: $(metadatadb)
