@@ -3,7 +3,6 @@
 
 import sys
 import re
-import string
 import xml.etree.cElementTree as e
 from collections import defaultdict
 
@@ -108,9 +107,9 @@ def main():
                 for tok in tokz.tokenize_tail(tail):
                     print_token(tok)
                     itoken += 1
-            if (itoken % fragsize) == 0:
-                fragid += 1
-                sys.stdout.write("</f>\n<f id={}>\n".format(fragid))
+                    if (itoken % fragsize) == 0:
+                        fragid += 1
+                        sys.stdout.write("</f>\n<f id={}>\n".format(fragid))
     print_footer()
 
 
