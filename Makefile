@@ -168,7 +168,7 @@ parse: $(vertfiles:.vert=.conllu)
 %.slem: %.vert
 	gawk -f scripts/vert2lemfragments.gawk $< > $@
 
-%.vectors: %.slem
+%.vectors: %.slem stopwords.txt
 	mallet import-file --line-regex "^(\S*\t[^\t]*)\t([^\t]*)\t([^\t]*)" --label 3 --name 1 --data 2 --keep-sequence --token-regex "[\p{L}\p{N}-]*\p{L}+" --stoplist-file stopwords.txt --input $< --output $@
 
 lda/model%.mallet lda/summary%.txt lda/doc-topics%.txt lda/topic-phrase%.xml lda/diag%.xml: detcorpus.vectors
