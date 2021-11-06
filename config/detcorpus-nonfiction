@@ -86,6 +86,9 @@ STRUCTURE f {
     }
 }
 STRUCTURE s 
-SHORTREF "=doc.year,=doc.author,=doc.sourcetitle,=f.id"
+STRUCTURE page {
+    ATTRIBUTE n
+}
+SHORTREF "=doc.year,=doc.author,=doc.title,=f.id"
 MAXCONTEXT 200
 MAXDETAIL 500
