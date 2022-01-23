@@ -32,10 +32,9 @@ class MetaDB(object):
         self._conn.row_factory = sqlite3.Row
         self._cur = self._conn.cursor()
         self._genres = defaultdict(str)
-        with open(genres, newline='', encoding='utf-8') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                self._genres['/'.join((row[0], row[1]))] = row[2]
+
+        for row in self.query("SELECT * FROM genres"):
+            self._genres[row['filename']] = row['genre']
 
     def query(self, query, params=None):
         if params:
@@ -48,7 +47,7 @@ class MetaDB(object):
 
     def get_all_files(self):
         filelist = []
-        for row in self.query('SELECT filename FROM editions WHERE filename IS NOT NULL'):
+        for row in self.query('SELECT filename FROM texts WHERE filename IS NOT NULL'):
             filelist.append(row[0])
         return filelist
 
@@ -65,16 +64,16 @@ class MetaDB(object):
         return result
 
     def meta_for_file(self, filename):
-        metad = {}
-        metad['id'] = self.generate_id(filename)
-        for row in self.query("SELECT editions.author_name, editions.title, books.booktitle, books.year, books.city, books.publisher, editions.uuid, books.colophon, books.sourcetitle,"
-								" first_books.year as first_book_publication,"
-								" first_books.colophon as first_colophon,"
-								" first_books.sourcetitle as first_sourcetitle" 
-								" FROM editions JOIN books ON editions.book_id = books.book_id"
-								" LEFT JOIN editions as first_editions ON editions.uuid = first_editions.uuid and first_editions.filename is null"
-								" LEFT JOIN books as first_books ON first_editions.book_id = first_books.book_id"
-								" WHERE editions.filename=?", (filename,)):
+        metad = {'id': self.generate_id(filename)}
+        for row in self.query(
+                "SELECT texts.title, texts.year,"
+                " texts.uuid, texts.colophon, texts.sourcetitle,"
+                " first_texts.year as first_book_publication,"
+                " first_texts.colophon as first_colophon,"
+                " first_texts.sourcetitle as first_sourcetitle"
+                " FROM texts "
+                " LEFT JOIN texts as first_texts ON texts.uuid = first_texts.uuid AND first_texts.filename is null"
+                " WHERE texts.filename=?", (filename,)):
             metad.update(row)
         try:
             authors = self.get_authors(metad['uuid'])
@@ -100,12 +99,8 @@ class MetaDB(object):
         return metad
 
     def get_filenames(self):
-        fs = self.query('SELECT filename FROM editions WHERE filename is not NULL and filename != \'\'')
+        fs = self.query('SELECT filename FROM texts WHERE filename is not NULL and filename != \'\' ORDER BY filename')
         return list(map(lambda r: r[0], fs.fetchall()))
-
-    def get_firstprint(self, uuid):
-        c = self.query('select MIN(year) from editions JOIN books ON editions.book_id = books.book_id where uuid=?', (uuid,))
-        return c.fetchone()[0]
 
     def get_authors(self, uuid):
         authors = defaultdict(list)
@@ -189,7 +184,7 @@ def main():
             fieldnames = ['filename', 'author', 'realname', 'author_birth_year', 'author_death_year', 'author_sex',
                     'title', 'year', 'firstprint_description', 'edition_year', 'edition', 'genre', 'id']
         else:
-            fieldnames = ['filename', 'id', 'year', 'edition_year', 'genre', 'publisher', 'author_name', 'booktitle', 'city', 'author_sex',
+            fieldnames = ['filename', 'id', 'year', 'edition_year', 'genre', 'author_sex',
                            'author_death_year', 'uuid', 'title', 'author', 'author_birth_year', 'realname', 'colophon', 'sourcetitle',
                                                'firstprint_description', 'edition']
         with open(args.outfile, 'w', newline='') as csvfile:
