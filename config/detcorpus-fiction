@@ -56,13 +56,8 @@ STRUCTURE doc {
     }
     ATTRIBUTE realname
     ATTRIBUTE title
-    ATTRIBUTE booktitle
-    ATTRIBUTE sourcetitle
-    ATTRIBUTE colophon
     ATTRIBUTE firstprint_description
     ATTRIBUTE edition
-    ATTRIBUTE city
-    ATTRIBUTE publisher
     ATTRIBUTE wordcount
 }
 DIACHRONIC doc.year
