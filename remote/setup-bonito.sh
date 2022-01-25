@@ -17,10 +17,19 @@ a2ensite "$corpname"-testing
 # setup bonito instance
 setupbonito "$corpdir" /var/lib/manatee
 cgifile="$corpdir/run.cgi"
-sed -i "s/\[u'susanne'\]/[$pycorplist]/" "$cgifile"
-sed -i "s/u'susanne'/u'$defaultcorp'/" "$cgifile"
+if grep -q "corplist = \[u'susanne'\]" 
+then
+	sed -i "/corplist = \[u'susanne'\]/s/\[u'susanne'\]/[$pycorplist]/" "$cgifile"
+else
+	sed -i "/corplist =/s/\[\([^]]\+\)\]/[\1,$pycorplist]/" "$cgifile"
+fi
+sed -i "/corpname =/s/u'susanne'/u'$defaultcorp'/" "$cgifile"
 sed -i "/os.environ\['MANATEE_REGISTRY'\]/s/''/'\/var\/lib\/manatee\/registry'/" "$cgifile"
 # setup crystal instance
 cp /etc/httpd2/conf/sites-available/bonito.conf /etc/httpd2/conf/sites-available/crystal.conf
 sed -i "s/bonito/crystal/g" /etc/httpd2/conf/sites-available/crystal.conf
 a2ensite crystal
+sed -i '/URL_BONITO/s/https/http/' /var/www/crystal/config.js
+sed -i '/URL_BONITO/s/bonito/$corpname-testing/' /var/www/crystal/config.js
+
+
