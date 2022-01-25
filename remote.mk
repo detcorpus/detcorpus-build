@@ -8,7 +8,7 @@ install-remote-scripts:
 	$(RSYNC) remote/*.sh $(HOST):bin
 
 create-testing: 
-	ssh $(HOST) "bin/create-hsh.sh"
+	ssh $(HOST) "bin/create-hsh.sh ."
 	ssh $(HOST) "bin/install-all-corpora.sh"
 	ssh $(HOST) "bin/setup-all-corpora.sh"
 
@@ -56,4 +56,21 @@ rollback: stop-production
 	ssh $(HOST) mv $(PRODUCTION) $(TESTING)
 	ssh $(HOST) mv $(ROLLBACK) $(PRODUCTION)
 
+install-scripts-local:
+	$(RSYNC) remote/*.sh ~/bin
+
+create-testing-local:
+	sh ~/bin/create-hsh.sh ~/hasher
+	sh ~/bin/setup-corpus.sh $(corpsite) $(corpora)
+
+install-local-%: export/%.tar.xz
+	sh ~/bin/stop-env.sh testing
+	sh ~/bin/install-corpus.sh export $* 
+	sh ~/bin/start-env.sh testing
+
+start-local:
+	sh ~/bin/start-env.sh testing
+
+stop-local:
+	sh ~/bin/stop-env.sh $*
 
