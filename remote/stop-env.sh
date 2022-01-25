@@ -1,4 +1,6 @@
 #!/bin/sh
+root_dir="$1"
+shift
 environment="$1"
 shift
 tmux has-session -t "$environment" || exit 0
