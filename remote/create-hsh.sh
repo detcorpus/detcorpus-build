@@ -1,4 +1,6 @@
-hasher_chroot="testing"
+root_dir=$1
+shift
+hasher_chroot="$root_dir/testing"
 port="8098"
 other_chroot="production"
 
@@ -14,8 +16,8 @@ fi
 hsh "$number_opt" --initroot --pkg-build-list="basesystem" --no-cache "$hasher_chroot" ; \
 hsh-install "$number_opt" "$hasher_chroot" manatee-open python3-module-gdex bonito-open crystal-open apache2-base iproute2 schedutils vim-enhanced
 
-cp bin/setup-corpus-environment.sh "$hasher_chroot/chroot/.in/"
-cp bin/setup-bonito.sh "$hasher_chroot/chroot/.in/"
+cp $HOME/bin/setup-corpus-environment.sh "$hasher_chroot/chroot/.in/"
+cp $HOME/bin/setup-bonito.sh "$hasher_chroot/chroot/.in/"
 
 if test -z "$number_opt"
 then share_network=yes hsh-run --mount=/proc --rooter "$hasher_chroot" -- sh setup-corpus-environment.sh "$port"
