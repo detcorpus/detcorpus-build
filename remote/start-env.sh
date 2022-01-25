@@ -1,5 +1,5 @@
 #!/bin/sh
-root="$1'
+root="$1"
 shift
 environment="$1"
 shift
