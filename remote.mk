@@ -16,9 +16,11 @@ create-testing:
 	ssh $(HOST) "bin/create-hsh.sh $(remoteroot)"
 	ssh $(HOST) "bin/install-all-corpora.sh $(remotearch) $(remoteroot)"
 	ssh $(HOST) "bin/setup-all-corpora.sh $(remotearch) $(remoteroot)"
+	ssh $(HOST) "bin/fix-detcorpus-host.sh"
 
 setup-bonito: 
 	ssh $(HOST) "bin/setup-corpus.sh $(corpsite) $(corpora)"
+	ssh $(HOST) "bin/fix-detcorpus-host.sh"
 
 install-corpus-%: $(localarch)/%.tar.xz
 	$(RSYNC) $< $(HOST):$(remotearch)/
