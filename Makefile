@@ -192,7 +192,10 @@ lda/labels%.txt: lda/summary%.txt
 lda/dtfull%.tsv: lda/model%.mallet
 	mallet train-topics --input-model $< --no-inference --output-doc-topics $@
 
-lda: $(patsubst %, lda/model%.mallet, $(numtopics))
+ldadir:
+	test -d lda || mkdir -p lda
+
+lda: $(patsubst %, lda/model%.mallet, $(numtopics)) | ldadir
 
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
