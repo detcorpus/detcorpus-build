@@ -42,7 +42,7 @@ random := $(file <$(randomseed))
 
 ## UTILS
 gitsrc=git --git-dir=$(SRC)/.git/
-db2meta=python3 scripts/db2meta.py --dbfile=meta.db --genres=$(SRC)/genres.csv
+db2meta=python3 scripts/db2meta.py --dbfile=meta.db 
 udpiper := PYTHONPATH=../udpiper python3 ../udpiper/bin/udpiper 
 
 ## HARDCODED FILELIST TWEAKS
