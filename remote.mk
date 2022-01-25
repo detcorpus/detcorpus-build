@@ -1,3 +1,8 @@
+localroot := ~/hasher
+localarch := export
+remoteroot := .
+remotearch := built
+
 remote-setup:
 	@echo Remote host: $(HOST)
 	@echo Corpus archive basename: $(corpbasename)
@@ -8,32 +13,32 @@ install-remote-scripts:
 	$(RSYNC) remote/*.sh $(HOST):bin
 
 create-testing: 
-	ssh $(HOST) "bin/create-hsh.sh ."
-	ssh $(HOST) "bin/install-all-corpora.sh"
-	ssh $(HOST) "bin/setup-all-corpora.sh"
+	ssh $(HOST) "bin/create-hsh.sh $(remoteroot)"
+	ssh $(HOST) "bin/install-all-corpora.sh $(remotearch) $(remoteroot)"
+	ssh $(HOST) "bin/setup-all-corpora.sh $(remotearch) $(remoteroot)"
 
 setup-bonito: 
 	ssh $(HOST) "bin/setup-corpus.sh $(corpsite) $(corpora)"
 
-install-corpus-%: export/%.tar.xz
-	$(RSYNC) $< $(HOST):$(BUILT)/
-	ssh $(HOST) "echo $(corpsite-$*) $(corpora-$*) > $(BUILT)/$*.setup.txt"
-	ssh $(HOST) "bin/stop-env.sh testing"
-	ssh $(HOST) "bin/install-corpus.sh $*"
-	ssh $(HOST) "bin/start-env.sh testing"
+install-corpus-%: $(localarch)/%.tar.xz
+	$(RSYNC) $< $(HOST):$(remotearch)/
+	ssh $(HOST) "echo $(corpsite-$*) $(corpora-$*) > $(remotearch)/$*.setup.txt"
+	ssh $(HOST) "bin/stop-env.sh $(remoteroot) testing"
+	ssh $(HOST) "bin/install-corpus.sh $(remotearch) $(remoteroot) $*"
+	ssh $(HOST) "bin/start-env.sh $(remoteroot) testing"
 
 uninstall-testing:
-	ssh $(HOST) "rm -f $(BUILT)/$(corpbasename).tar.xz"
-	ssh $(HOST) "rm -f $(BUILT)/$(corpbasename).setup.txt"
+	ssh $(HOST) "rm -f $(remotearch)/$(corpbasename).tar.xz"
+	ssh $(HOST) "rm -f $(remotearch)/$(corpbasename).setup.txt"
 
 start-%:
-	ssh $(HOST) "bin/start-env.sh $*"
+	ssh $(HOST) "bin/start-env.sh $(remoteroot) $*"
 
 stop-%:
-	ssh $(HOST) "bin/stop-env.sh $*"
+	ssh $(HOST) "bin/stop-env.sh $(remoteroot) $*"
 
 update-corpus:
-	make compile
+	make export
 	make stop-testing
 	make install-testing
 	make start-testing
@@ -59,18 +64,20 @@ rollback: stop-production
 install-scripts-local:
 	$(RSYNC) remote/*.sh ~/bin
 
-create-testing-local:
-	sh ~/bin/create-hsh.sh ~/hasher
-	sh ~/bin/setup-corpus.sh $(corpsite) $(corpora)
 
-install-local-%: export/%.tar.xz
-	sh ~/bin/stop-env.sh testing
-	sh ~/bin/install-corpus.sh export $* 
-	sh ~/bin/start-env.sh testing
+create-testing-local:
+	sh ./remote/create-hsh.sh $(localroot)
+	hsh-run --rooter $(localroot)/testing -- sh -x setup-bonito.sh $(corpsite) $(corpora)
+
+install-local-%: $(localarch)/%.tar.xz
+	sh ./remote/stop-env.sh $(localroot) testing
+	echo "$(corpsite-$*) $(corpora-$*)" > $(localarch)/$*.setup.txt
+	sh ./remote/install-corpus.sh $(localarch) $(localroot) $* 
+	sh ./remote/start-env.sh testing
 
 start-local:
-	sh ~/bin/start-env.sh testing
+	sh ./remote/start-env.sh $(localroot) testing
 
 stop-local:
-	sh ~/bin/stop-env.sh $*
+	sh ./remote/stop-env.sh $(localroot) testing 
 
