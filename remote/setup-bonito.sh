@@ -30,6 +30,6 @@ cp /etc/httpd2/conf/sites-available/bonito.conf /etc/httpd2/conf/sites-available
 sed -i "s/bonito/crystal/g" /etc/httpd2/conf/sites-available/crystal.conf
 a2ensite crystal
 sed -i '/URL_BONITO/s/https/http/' /var/www/crystal/config.js
-sed -i '/URL_BONITO/s/bonito/$corpname-testing/' /var/www/crystal/config.js
+sed -i "/URL_BONITO/s/bonito/$corpname-testing/" /var/www/crystal/config.js
 
 
