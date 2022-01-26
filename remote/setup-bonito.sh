@@ -18,12 +18,16 @@ a2ensite "$corpname"-testing
 # setup bonito instance
 setupbonito "$corpdir" /var/lib/manatee
 cgifile="$corpdir/run.cgi"
-if grep -q "corplist = \[u'susanne'\]" 
+if $(grep -q "corplist = \[u'susanne'\]" $cgifile)
 then
 	sed -i "/corplist = \[u'susanne'\]/s/\[u'susanne'\]/[$pycorplist]/" "$cgifile"
 else
-	sed -i "/corplist =/s/\[\([^]]\+\)\]/[\1,$pycorplist]/" "$cgifile"
+	sed -i "/[^:] corplist =/s/\[\([^]]\+\)\]/[\1$pycorplist]/" "$cgifile"
 fi
+# deduplicate corpus list
+dedupcorplist="$(sed -n '/[^:] corplist =/s/^.*\[\([^]]\+\)\].*$/\1/p' $cgifile | awk 'BEGIN{FS=" "}{for (i=1;i<=NF;i++) if (!a[$i]++) printf "%s ", $i}')"
+sed -i "/corplist =/s/\[\([^]]\+\)\]/[$dedupcorplist]/" "$cgifile"
+# set default corpus (only first timme application)
 sed -i "/corpname =/s/u'susanne'/u'$defaultcorp'/" "$cgifile"
 sed -i "/os.environ\['MANATEE_REGISTRY'\]/s/''/'\/var\/lib\/manatee\/registry'/" "$cgifile"
 # setup crystal instance
