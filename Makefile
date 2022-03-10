@@ -282,3 +282,8 @@ test-lda: metadata.csv $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 ## NAMES (for the record)
 names:
 	cat lda/doc-topics50.txt | awk '{for (f=4; f<=NF;f++) {if ($f<0.05) {$f=0} else {$f=1}}; print $0}' > lda/doc-topics50i.txt
+
+## running check_metadata_sql.py
+## for finding mistakes in metadata.sql
+errors-metadata: $(metadatadb)
+	python3 test/check_metadata_sql.py -i $<
