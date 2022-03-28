@@ -123,11 +123,13 @@ metadata.csv: meta.db scripts/db2meta.py
 
 detcorpus.vert: $(vertfiles) .metadata
 	rm -f $@
-	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
+	$(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
+	@true
 
 detcorpus.ws.vert: $(vertfiles:.vert=.wstate.vert)
 	rm -f $@
-	echo "$(sort $^)" | tr ' ' '\n' | while read f ; do cat "$$f" >> $@ ; done
+	$(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
+	@true
 
 detcorpus-nonfiction.vert: detcorpus.ws.vert
 	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $@
