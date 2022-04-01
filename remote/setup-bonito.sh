@@ -13,6 +13,7 @@ done
 cp /etc/httpd2/conf/sites-available/bonito.conf /etc/httpd2/conf/sites-available/"$corpname"-testing.conf
 sed -i "/Alias/s/bonito/$corpname-testing/" /etc/httpd2/conf/sites-available/"$corpname"-testing.conf
 sed -i "s,/var/www/bonito\?,/var/www/$corpname," /etc/httpd2/conf/sites-available/"$corpname"-testing.conf
+sed -i "/#ServerName/s/#ServerName\s+www.example.com:80/ServerName localhost:80/" /etc/httpd2/conf/sites-available/default.conf
 mkdir -p "$corpdir"
 a2ensite "$corpname"-testing
 # setup bonito instance
