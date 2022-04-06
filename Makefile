@@ -6,6 +6,7 @@ vpath %.fb2 $(SRC)
 vpath %.html $(SRC)
 vpath %.csv $(SRC)
 vpath %.epub $(SRC)
+vpath %.md $(SRC)
 #
 # SETUP CREDENTIALS
 HOST=detcorpus
@@ -58,10 +59,6 @@ srcfb2files := $(filter %.fb2, $(srcfiles))
 srcepubfiles := $(filter %.epub, $(srcfiles))
 textfiles := $(srctxtfiles) $(srcfb2files) $(srchtmlfiles) $(srcepubfiles)
 vertfiles := $(srcfb2files:.fb2=.vert) $(srctxtfiles:.txt=.vert) $(srchtmlfiles:.html=.vert) $(srcepubfiles:.epub=.vert)
-# DATA
-datatypes := pos lemma word
-datafiles := $(foreach corpus, $(corpora-detcorpus), $(patsubst %, data/$(corpus)/%.counts.tsv, $(datatypes)))
-shuffled := $(addprefix data/text/, $(vertfiles))
 
 help:
 	 @echo 'Makefile for building detcorpus                                           '
@@ -228,23 +225,17 @@ lda/vis%/lda.json: lda/model%.mallet detcorpus.vocab.txt
 
 ldavis: $(patsubst %, lda/vis%/lda.json, $(numtopics))
 
-## Data
+## Dataset
 
-data/%/lemma.counts.tsv: %.vert
-	mkdir -p $(@D)
-	gawk -v col=lemma -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
+shuffled := $(addprefix data/text/, $(vertfiles))
+ldafilelist := lda/summary*.txt lda/diag*.xml lda/doc-topics*.txt lda/labels*.txt lda/topic-phrase*.xml
+ldafiles := $(foreach ntopics,$(numtopics),$(subst *,$(ntopics),$(ldafilelist)))
+docfiles := README.md CHANGELOG.md metadata.csv
+testfiles := test/metadata.py test/lda.py
+txtzip := texts.zip
+datasetfiles := $(ldafiles) $(docfiles) $(testfiles) $(txtzip) 
 
-data/%/word.counts.tsv: %.vert
-	mkdir -p $(@D)
-	gawk -v col=word -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
-
-data/%/pos.counts.tsv: %.vert
-	mkdir -p $(@D)
-	gawk -v col=pos -f scripts/childlit_stats.awk $< | sort -k1,1n -k2,2 -k3,3n -k5,5nr -k4,4 --parallel=$(NPROC) > $@
-
-data: $(datafiles)
-
-data/text/%.vert: %.vert $(randomseed)
+data/text/%.vert: %.wstate.vert $(randomseed)
 	test -d $(@D) || mkdir -p $(@D)
 	python3 scripts/shuffle_vert.py -r $(random) $< $@
 
@@ -253,9 +244,10 @@ texts.zip: $(shuffled)
 	rm -f $(filter-out $(shuffled),$(wildcard data/text/*s/*))
 	zip -r -D $@ data/text/
 
-lda.zip: lda
-	zip -r lda.zip lda/*.txt lda/*.xml
+dataset.zip: $(datasetfiles)
+	zip -r $@ $<
 
+dataset: dataset.zip
 
 ## Skipgrams
 
