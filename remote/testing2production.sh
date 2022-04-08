@@ -13,5 +13,5 @@ cp ports-available/"$testport".conf ports-available/"$prodport".conf
 sed -i "s/$testport/$prodport/g" ports-available/"$prodport".conf
 a2disport "$testport"
 a2enport "$prodport"
-sed -i "/URL_BONITO/s,/bonito/,/$corpname/," /var/www/crystal/config.js
+sed -i "/URL_BONITO/s,/$corpname-testing/,/$corpname/," /var/www/crystal/config.js
 service httpd2 reload
