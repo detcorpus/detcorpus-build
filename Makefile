@@ -281,3 +281,10 @@ names:
 ## for finding mistakes in metadata.sql
 errors-metadata: $(metadatadb)
 	python3 test/check_metadata_sql.py -i $<
+
+## CLEANUP FOR BUILD
+
+clean: clean-converted
+
+clean-converted:
+	rm -f $(vertfiles:.vert=.txt)
