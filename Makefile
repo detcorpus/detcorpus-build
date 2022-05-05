@@ -172,11 +172,11 @@ parse: $(vertfiles:.vert=.conllu)
 
 lda/model%.mallet lda/summary%.txt lda/doc-topics%.txt lda/topic-phrase%.xml lda/diag%.xml: detcorpus.vectors
 	mallet train-topics --input $< --num-topics $* --output-model lda/model$*.mallet \
-		--num-threads $(NPROC) --random-seed 987439812 --num-iterations 1000 --num-icm-iterations 20 \
+		--num-threads $(NPROC) --random-seed 41 --num-iterations 1000 --num-icm-iterations 20 \
 		--num-top-words 50 --optimize-interval 20 \
 		--output-topic-keys lda/summary$*.txt \
 		--xml-topic-phrase-report lda/topic-phrase$*.xml \
-		--output-doc-topics lda/doc-topics$*.txt --doc-topics-threshold 0.05 \
+		--output-doc-topics lda/doc-topics$*.txt --doc-topics-threshold 0.0 \
 		--diagnostics-file lda/diag$*.xml
 
 lda/state%.gz: lda/model%.mallet
