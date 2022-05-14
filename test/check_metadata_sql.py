@@ -1,5 +1,6 @@
 import argparse
 import re
+import csv
 """
 Скрипт для вывода индексов строк в файле metadata.sql, 
 которые 
@@ -12,7 +13,7 @@ import re
 # находит ошибки в файле metadata.sql
 
 def find_errors(file_path):
-    with open(file_path, 'rb') as f:
+    with open(file_path, 'r') as f:
         # для будущих строк с ошибками
         errors_string = {'text_author': [], 'bad_strings': [], 'ascii': []}
         # множество всех строк для таблицы text_author
@@ -22,13 +23,7 @@ def find_errors(file_path):
         # регулярное выражение для строки
         reg_exp = r'INSERT INTO ([a-zA-Z"_]+) VALUES \((.+?)\);\n'
 
-        for i, line_b in enumerate(f):
-            # проверяем на ascii символы в файле
-            try:
-                line = line_b.decode('utf-8', 'strict')
-            except UnicodeDecodeError:
-                errors_string['ascii'].append(ind)
-                continue
+        for i, line in enumerate(f):
 
             ind = i + 1
             # найдем место первого INSERT
@@ -56,6 +51,11 @@ def find_errors(file_path):
                 else:
                     text_author_strings[value] = ind
 
+            # проверяем, имеются ли в тексте ascii-кавычки
+            values = m.group(2)
+            if values.find('"') >= 0:
+                errors_string['ascii'].append(ind)
+
     return errors_string
 
 
@@ -66,7 +66,7 @@ def main(args):
     # повторяющиеся строки в таблице text_author
     print(f"повторяющиеся строки в таблице text_author (повторяющаяся строка, первое вхождение): {errors['text_author']}")
     # ascii символы
-    print(f"ascii-символы: {errors['ascii']}")
+    print(f"ascii-кавычки: {errors['ascii']}")
 
 
 if __name__ == "__main__":
