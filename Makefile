@@ -33,7 +33,7 @@ corpora-detcorpus := detcorpus-fiction detcorpus-nonfiction
 ## SETTINGS
 SHELL := /bin/bash
 NPROC := $(shell nproc)
-.PRECIOUS: %.txt %.conllu %.wlda.vert detcorpus.vocab.txt
+.PRECIOUS: %.txt %.conllu %.wlda.vert detcorpus.vocab.txt detcorpus.vert
 udmodel := data/russian-syntagrus-ud-2.5-191206.udpipe
 numtopics := 100 200 300
 metadatadb=$(SRC)/metadata.sql
@@ -108,9 +108,14 @@ meta.db: $(metadatadb)
 	test -d mrc || mkdir mrc
 	sqlite3 meta.db "select download_link || ' mrc/' || book_id || '.mrc' from books where download_link is not null" | fgrep -v search.rsl | while read link outfile ; do test -f "$$outfile" || wget "$$link" -O "$$outfile" ; done && touch .mrc
 
-.metadata: $(textfiles) $(vertfiles) meta.db $(SRC)/genres.csv scripts/db2meta.py
-	echo $(textfiles) | tr ' ' '\n' | while read f ; do sed -i -e "1c $$($(db2meta) -f $$f)" $${f%.*}.vert ; done && touch $@
+define NL
 
+
+endef
+
+.metadata: $(textfiles) $(vertfiles) meta.db $(SRC)/genres.csv scripts/db2meta.py
+	$(foreach f, $(textfiles), sed -i -e "1c $$($(db2meta) -f $(f))" $(basename $(f)).vert$(NL))
+	touch $@
 
 meta.csv: meta.db scripts/db2meta.py
 	$(db2meta) -o $@
@@ -119,12 +124,10 @@ metadata.csv: meta.db scripts/db2meta.py
 	$(db2meta) -o $@ --dataset
 
 detcorpus.vert: $(vertfiles) .metadata
-	rm -f $@
-	$(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
+	@echo $(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
 	@true
 
 detcorpus.ws.vert: $(vertfiles:.vert=.wstate.vert)
-	rm -f $@
 	$(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
 	@true
 
@@ -287,4 +290,7 @@ errors-metadata: $(metadatadb)
 clean: clean-converted
 
 clean-converted:
-	rm -f $(vertfiles:.vert=.txt)
+	$(foreach f, $(vertfiles), rm -f $(f:.vert=.txt)$(NL))
+
+clean-build:
+	$(foreach f, $(vertfiles), rm -f $(f)$(NL))
