@@ -179,7 +179,7 @@ lda/model%.mallet lda/summary%.txt lda/doc-topics%.txt lda/topic-phrase%.xml lda
 		--num-top-words 50 --optimize-interval 20 \
 		--output-topic-keys lda/summary$*.txt \
 		--xml-topic-phrase-report lda/topic-phrase$*.xml \
-		--output-doc-topics lda/doc-topics$*.txt --doc-topics-threshold 0.0 \
+		--output-doc-topics lda/doc-topics$*.txt --doc-topics-threshold 0.05 \
 		--diagnostics-file lda/diag$*.xml
 
 lda/state%.gz: lda/model%.mallet
