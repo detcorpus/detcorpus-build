@@ -19,7 +19,7 @@ create-testing:
 	ssh $(HOST) "bin/fix-detcorpus-host.sh"
 
 setup-bonito: 
-	ssh $(HOST) "bin/setup-corpus.sh $(corpsite) $(corpora)"
+	ssh $(HOST) "bin/setup-corpus.sh $(remoteroot) $(corpsite) $(corpora)"
 	ssh $(HOST) "bin/fix-detcorpus-host.sh"
 
 install-corpus-%: $(localarch)/%.tar.xz
