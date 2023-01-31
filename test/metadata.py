@@ -25,10 +25,24 @@ class MetadataIntegrityTestCase(unittest.TestCase):
                        'realism',
                        'school',
                        'skazka']
-        with zipfile.ZipFile(os.path.join(tests_dir, '../texts.zip')) as zfile:
-            self.zipfiles = list(map(lambda f: f.filename.replace('data/text/', ''),
-                                zfile.infolist()))
+        try:
+            with zipfile.ZipFile(os.path.join(tests_dir, '../texts.zip')) as zfile:
+                self.zipfiles = list(map(lambda f: f.filename.replace('data/text/', ''),
+                                    zfile.infolist()))
+            self.nozip = False
+        except FileNotFoundError:
+            self.nozip = True
 
+    def skipIfTrue(flag, reason):
+        def deco(f):
+            def wrapper(self, *args, **kwargs):
+                if getattr(self, flag):
+                    self.skipTest(reason)
+                else:
+                    f(self, *args, **kwargs)
+            return wrapper
+        return deco
+            
     def test_empty_authors(self):
         """check that there's no empty author fields"""
         self.assertFalse(any(pd.isna(self.df.author)))
@@ -74,12 +88,14 @@ class MetadataIntegrityTestCase(unittest.TestCase):
         self.assertEqual(0, len(dups), msg='duplicate titles:\n %s' % dups)
 
     longMessage = False
+    @skipIfTrue('nozip', 'texts.zip is not yet built')
     def test_no_missing_files(self):
         """check that every metadata entry has a corresponding file in the archive"""
         for f in self.df.filename:
             with self.subTest(f=f):
                 self.assertIn(str(f), self.zipfiles, msg='%s not found in the texts.zip' % f)
 
+    @skipIfTrue('nozip', 'texts.zip is not yet built')
     def test_no_missing_metadata(self):
         """check that every file in the archive has a corresponding metadata entry"""
         mfiles = set(self.df.filename)
