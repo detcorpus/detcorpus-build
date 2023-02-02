@@ -119,11 +119,14 @@ class MetaDB(object):
         return authors
 
     def make_authorname(self, table, column, a_id):
-        c = self.query('SELECT last, first, middle FROM "{}" WHERE {}=?'.format(table.replace('"', '""'), column), (a_id,))
+        c = self.query('SELECT full, last, first, middle FROM "{}" WHERE {}=?'.format(table.replace('"', '""'), column), (a_id,))
         author = c.fetchone()
         if author == None:
             return ''
-        return '{last}, {first} {middle}'.format(**author)
+        elif 'full' in author:
+            return '{full}'.format(**author)
+        else:
+            return '{last}, {first} {middle}'.format(**author)
 
     def generate_id(self, filename):
         m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)\.([12][09][0-9][0-9])', filename)
