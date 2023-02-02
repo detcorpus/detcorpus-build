@@ -72,7 +72,7 @@ class MetaDB(object):
                 " first_texts.colophon as first_colophon,"
                 " first_texts.sourcetitle as first_sourcetitle"
                 " FROM texts "
-                " LEFT JOIN texts as first_texts ON texts.uuid = first_texts.uuid AND first_texts.filename is null"
+                " LEFT JOIN texts as first_texts ON texts.uuid = first_texts.uuid AND (first_texts.filename is null OR first_texts.filename = '')"
                 " WHERE texts.filename=?", (filename,)):
             metad.update(row)
         try:
