@@ -113,9 +113,9 @@ class MetaDB(object):
                 authors['author'].append(self.make_authorname('authors', 'author_id', row['author_id']))
             authordata = self.query('SELECT sex, birth_year, death_year FROM authors WHERE author_id=?', (row['author_id'],)).fetchone()
             if authordata != None:
-                authors['author_sex'].append(authordata['sex'])
-                authors['author_birth_year'].append(authordata['birth_year'])
-                authors['author_death_year'].append(authordata['death_year'])
+                authors['author_sex'].append(authordata['sex'] or '')
+                authors['author_birth_year'].append(authordata['birth_year'] or '')
+                authors['author_death_year'].append(authordata['death_year'] or '')
         return authors
 
     def make_authorname(self, table, column, a_id):
@@ -126,7 +126,12 @@ class MetaDB(object):
         elif author['full'] is not None:
             return '{full}'.format(**author)
         else:
-            return '{last}, {first} {middle}'.format(**author)
+            if author['middle'] is not None:
+                return '{last}, {first} {middle}'.format(**author)
+            elif author['first'] is not None:
+                return '{last}, {first}'.format(**author)
+            else:
+                return '{last}'.format(**author)
 
     def generate_id(self, filename):
         m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)\.([12][09][0-9][0-9])', filename)
