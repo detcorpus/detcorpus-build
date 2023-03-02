@@ -123,7 +123,7 @@ class MetaDB(object):
         author = c.fetchone()
         if author == None:
             return ''
-        elif 'full' in author:
+        elif author['full'] is not None:
             return '{full}'.format(**author)
         else:
             return '{last}, {first} {middle}'.format(**author)
