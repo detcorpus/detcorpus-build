@@ -1,5 +1,5 @@
-PATH "./export/data/detcorpus-fiction"
-VERTICAL "./export/vert/detcorpus-fiction.vert"
+PATH "/var/lib/manatee/data/detcorpus-fiction"
+VERTICAL "/var/lib/manatee/vert/detcorpus-fiction.vert"
 ENCODING "utf-8"
 LANGUAGE "ДетКорпус (художественная литература)"
 LOCALE "ru_RU"
@@ -21,9 +21,6 @@ ATTRIBUTE variable {
     MULTIVALUE yes
     MULTISEP "|"
 }
-ATTRIBUTE lda100
-ATTRIBUTE lda200
-ATTRIBUTE lda300
 STRUCTURE doc {
     ATTRIBUTE genre {
         MULTIVALUE yes
@@ -58,7 +55,6 @@ STRUCTURE doc {
     ATTRIBUTE title
     ATTRIBUTE firstprint_description
     ATTRIBUTE edition
-    ATTRIBUTE wordcount
 }
 DIACHRONIC doc.year
 DIACHRONIC doc.edition_year
@@ -79,11 +75,13 @@ STRUCTURE f {
         MULTISEP "|"
     }
 }
-STRUCTURE s 
+STRUCTURE s  {
+    DISPLAYTAG 0
+}
 STRUCTURE page {
     ATTRIBUTE n
 }
 SHORTREF "=doc.year,=doc.author,=doc.title,=f.id"
 MAXCONTEXT 200
 MAXDETAIL 500
-SUBCDEF detcorpus-fiction.subcorpora
+SUBCDEF /var/lib/manatee/registry/detcorpus-fiction.subcorpora
