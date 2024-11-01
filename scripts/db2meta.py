@@ -134,7 +134,7 @@ class MetaDB(object):
                 return '{last}'.format(**author)
 
     def generate_id(self, filename):
-        m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)\.([12][09][0-9][0-9])', filename)
+        m = re.search('[0-9]+s/([^.]+\.[^.]+.*?)\.([12][089][0-9][0-9])', filename)
         try:
             return m.group(1)
         except AttributeError:
