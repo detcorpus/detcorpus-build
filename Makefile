@@ -24,7 +24,6 @@ corpbasename := detcorpus
 corpsite := detcorpus
 corpora := detcorpus-fiction detcorpus-nonfiction
 corpora-vert := $(addsuffix .vert, $(corpora))
-compiled := $(patsubst %,export/data/%/word.lex,$(corpora))
 ## Remote corpus installation data
 corpsite-detcorpus := detcorpus
 corpora-detcorpus := detcorpus-fiction detcorpus-nonfiction
@@ -75,7 +74,7 @@ help:
 	 @echo '                                                                          '
 
 ## remote operation scripts
-include remote.mk
+include docker.mk
 
 print-%:
 	@echo $(info $*=$($*))
@@ -127,17 +126,15 @@ detcorpus.vert: $(vertfiles) .metadata
 	@echo $(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
 	@true
 
-detcorpus.ws.vert: $(vertfiles:.vert=.wstate.vert)
+detcorpus.wlda.vert: $(vertfiles:.vert=.wlda.vert)
 	$(file >$@) $(foreach O,$(sort $^),$(file >>$@,$(file <$O)))
 	@true
 
-detcorpus-nonfiction.vert: detcorpus.ws.vert
+detcorpus-nonfiction.vert: detcorpus.wlda.vert
 	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $@
 
-detcorpus-fiction.vert: detcorpus.ws.vert
+detcorpus-fiction.vert: detcorpus.wlda.vert
 	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $@
-
-conllu: $(vertfiles:.vert=.conllu)
 
 export/data/%/word.lex: config/% %.vert
 	rm -rf export/data/$*
@@ -159,11 +156,11 @@ export/detcorpus.tar.xz: $(compiled)
 	bash -c "pushd export ; tar cJvf detcorpus.tar.xz --mode='a+r' * ; popd"
 
 
-compile: $(compiled)
+compile: $(corpora-vert)
 
 convert: $(vertfiles:.vert=.txt) 
 
-parse: $(vertfiles:.vert=.conllu)
+export: 
 
 ## LDA
 
@@ -199,7 +196,7 @@ ldadir:
 
 lda: $(patsubst %, lda/model%.mallet, $(numtopics)) | ldadir
 
-%.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics))
+%.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics)) $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
 lda/state.all: $(patsubst %,lda/state%,$(numtopics))

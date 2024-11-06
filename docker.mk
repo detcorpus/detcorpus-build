@@ -7,23 +7,31 @@ configfiles := $(patsubst %,config/%,$(corplist))
 corpvertfiles := $(patsubst %,%.vert,$(corplist))
 subcfiles := config/detcorpus-fiction.subcorpora
 archfile := detcorpus.tar.xz 
+exportfiles := $(patsubst %,$(localarch)/registry/%,$(configfiles) $(subcfiles)) $(patsubst %,$(localarch)/vert/%,$(corpvertfiles))
+exportdirs := $(patsubst %,$(localarch)/%,registry vert)
+packed := $(localarch)/$(archfile)
 
-exportfiles: $(configfiles) $(corpvertfiles) $(corpprlfiles)
-	rm -f $(localarch)/registry/*
-	rm -f $(localarch)/vert/*
+
+$(exportfiles) : $(configfiles) $(corpvertfiles) 
+	mkdir -p $(exportdirs)
 	cp -f $(configfiles) $(localarch)/registry
 	cp -f $(subcfiles) $(localarch)/registry
 	cp -f $(corpvertfiles) $(localarch)/vert
 
-docker-local:
+pull-image:
+	docker pull maslinych/noske-alt:2.142-alt1
+
+docker-local: $(exportfiles)
 	docker run -dit --name $(corpsite) -v $$(pwd)/$(localarch)/vert:/var/lib/manatee/vert -v $$(pwd)/$(localarch)/registry:/var/lib/manatee/registry -p 127.0.0.1:8088:8080 -e CORPLIST="$(corplist)" maslinych/noske-alt:2.142-alt1
 
-pack-files: 
-	rm -f $(localarch)/$(archfile)
+$(packed) : $(exportfiles)
+	rm -f $@
 	pushd $(localarch); tar cJvf $(archfile) registry vert
 
-upload-files: 
-	rsync -avP -e ssh $(localarch)/$(archfile) $(DOCKERHOST):$(remotearch)
+pack-files: $(packed)
+
+upload-files: $(packed)
+	rsync -avP -e ssh $< $(DOCKERHOST):$(remotearch)
 	ssh $(DOCKERHOST) 'tar xvf $(remotearch)/$(archfile) -C $(remoteroot)'
 
 remove-testing-docker:
