@@ -1,5 +1,5 @@
-PATH "./export/data/detcorpus-nonfiction"
-VERTICAL "./export/vert/detcorpus-nonfiction.vert"
+PATH "/var/lib/manatee/data/detcorpus-nonfiction"
+VERTICAL "/var/lib/manatee/vert/detcorpus-nonfiction.vert"
 ENCODING "utf-8"
 LANGUAGE "ДетКорпус (нон-фикшн)"
 LOCALE "ru_RU"
