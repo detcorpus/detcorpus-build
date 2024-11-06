@@ -90,9 +90,6 @@ print-%:
 	test -d $(@D) || mkdir -p $(@D)
 	w3m -dump $< > $@
 
-%.conllu: %.txt
-	udpipe --tokenize --tag --parse --output=conllu --outfile=$@ $(udmodel) $<  
-
 %.vert: %.txt scripts/mystem2vert.py
 	test -d $(@D) || mkdir -p $(@D)
 	sed -e 's/<pb n="\([0-9]\+\)"\/\?>/ PB\1/g' \
@@ -136,31 +133,9 @@ detcorpus-nonfiction.vert: detcorpus.wlda.vert
 detcorpus-fiction.vert: detcorpus.wlda.vert
 	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $@
 
-export/data/%/word.lex: config/% %.vert
-	rm -rf export/data/$*
-	rm -f export/registry/$*
-	mkdir -p $(@D)
-	mkdir -p export/registry
-	mkdir -p export/vert
-	encodevert -c ./$< -p $(@D) $*.vert
-	cp $< export/registry
-ifeq ("$(wildcard config/$*.subcorpora)","")
-	echo "no subcorpora defined for $*:: $(wildcard config/$*.subcorpora)"
-else
-	mksubc ./export/registry/$* export/data/$*/subcorp config/$*.subcorpora
-endif
-	sed -i 's,./export,/var/lib/manatee/,' export/registry/$*
-
-export/detcorpus.tar.xz: $(compiled)
-	rm -f $@
-	bash -c "pushd export ; tar cJvf detcorpus.tar.xz --mode='a+r' * ; popd"
-
-
 compile: $(corpora-vert)
 
 convert: $(vertfiles:.vert=.txt) 
-
-export: 
 
 ## LDA
 
@@ -179,18 +154,6 @@ lda/model%.mallet lda/summary%.txt lda/doc-topics%.txt lda/topic-phrase%.xml lda
 		--output-doc-topics lda/doc-topics$*.txt --doc-topics-threshold 0.05 \
 		--diagnostics-file lda/diag$*.xml
 
-lda/state%.gz: lda/model%.mallet
-	mallet train-topics --input-model $< --no-inference --output-state $@
-
-lda/state%: lda/state%.gz
-	gunzip -f $<
-
-lda/labels%.txt: lda/summary%.txt
-	sort -nr -k2 -t"	" $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
-
-lda/dtfull%.tsv: lda/model%.mallet
-	mallet train-topics --input-model $< --no-inference --output-doc-topics $@
-
 ldadir:
 	test -d lda || mkdir -p lda
 
@@ -198,32 +161,6 @@ lda: $(patsubst %, lda/model%.mallet, $(numtopics)) | ldadir
 
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics)) $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
-
-lda/state.all: $(patsubst %,lda/state%,$(numtopics))
-	 join -j1 -o0,1.2,1.3,1.4,1.5,1.6,1.7,2.7 --nocheck-order <(<lda/state100 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') <(<lda/state200 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') | join -j1 -o1.2,1.3,1.4,1.5,1.6,1.7,1.8,2.7 --nocheck-order - <(<lda/state300 gawk '$$0 ~ /^#/ {next} {print $$1"-"$$2"-"$$3"-"$$4"-"$$5" "$$0}') > $@
-
-lda/state.labeled: lda/state.all
-	gawk -f scripts/topic_labels.awk $(patsubst %,lda/labels%.txt,$(numtopics)) $< > $@
-
-filename-id.txt: metadata.csv
-	cat $< | sed 's/""/\&quot;/g' | gawk -f scripts/match_filename_to_ids.awk > $@
-
-$(vertfiles:.vert=.state.vert) &: lda/doc-topics100.txt filename-id.txt lda/state.labeled
-	gawk -v outdir="lda/states" -f scripts/state_separator.awk $^
-
-%.wstate.vert: %.state.vert %.wlda.vert
-	gawk -f scripts/state_merger.awk $^ > $@
-
-## LDAVis
-
-%.vocab.txt: %.vectors
-	mallet info --input $< --print-feature-counts > $@
-
-lda/vis%/lda.json: lda/model%.mallet detcorpus.vocab.txt
-	mkdir -p lda/vis$*/
-	Rscript scripts/ldavis.R -m $< -v detcorpus.vocab.txt -o lda/vis$*
-
-ldavis: $(patsubst %, lda/vis%/lda.json, $(numtopics))
 
 ## Dataset
 
@@ -249,18 +186,6 @@ dataset.zip: $(datasetfiles)
 
 dataset: dataset.zip
 
-## Skipgrams
-
-%.skipgrams: %.vert scripts/count_positional_skipgrams.py
-	python3 scripts/count_positional_skipgrams.py $< > $@
-
-count-skipgrams: $(vertfiles:.vert=.skipgrams) 
-
-detcorpus.skipgrams: count-skipgrams
-	$(file > $@.in) $(foreach skipfile,$(vertfiles:.vert=.skipgrams), $(file >> $@.in,$(skipfile)))
-	cat $@.in | while read f ; do echo "FILENAME $$f"; cat $$f ; done | python3 scripts/aggregate_skipgrams.py > $@
-	rm -f $@.in
-
 ## TESTS
 
 test: test-dataset
@@ -272,15 +197,6 @@ test-metadata: metadata.csv texts.zip
 
 test-lda: metadata.csv $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 test/lda.py
-
-## NAMES (for the record)
-names:
-	cat lda/doc-topics50.txt | awk '{for (f=4; f<=NF;f++) {if ($f<0.05) {$f=0} else {$f=1}}; print $0}' > lda/doc-topics50i.txt
-
-## running check_metadata_sql.py
-## for finding mistakes in metadata.sql
-errors-metadata: $(metadatadb)
-	python3 test/check_metadata_sql.py -i $<
 
 ## CLEANUP FOR BUILD
 
