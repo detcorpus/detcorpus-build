@@ -7,6 +7,7 @@ vpath %.html $(SRC)
 vpath %.csv $(SRC)
 vpath %.epub $(SRC)
 vpath %.md $(SRC)
+_dummy := $(shell mkdir -p lda)
 #
 # SETUP CREDENTIALS
 HOST=detcorpus
