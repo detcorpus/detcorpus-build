@@ -163,6 +163,9 @@ ldadir:
 
 lda: $(patsubst %, lda/model%.mallet, $(numtopics)) | ldadir
 
+lda/labels%.txt: lda/summary%.txt
+	sort -nr -k2 -t"        " $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
+
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics)) $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
 
