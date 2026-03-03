@@ -1,5 +1,5 @@
 DOCKERHOST := detcorpus
-noskeimage := maslinych/noske-alt:2.142-alt1
+noskeimage := daakhmerov/noske-pushdom:latest
 localarch := export
 remoteroot := corpora
 remotearch := setup
