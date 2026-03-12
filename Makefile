@@ -48,7 +48,7 @@ udpiper := PYTHONPATH=../udpiper python3 ../udpiper/bin/udpiper
 
 ## HARDCODED FILELIST TWEAKS
 duplicatesrc := $(shell $(gitsrc) ls-files dups)
-skipfiles := emolemmas.txt emowords.txt $(shell $(gitsrc) ls-files depot oldscripts algfio docs) 
+skipfiles := emolemmas.txt emowords.txt $(shell $(gitsrc) ls-files depot oldscripts algfio docs TODO) 
 ## STANDARD SOURCE FILELISTS
 gitfiles := $(shell $(gitsrc) ls-files)
 srcfiles := $(filter-out $(duplicatesrc) $(skipfiles), $(gitfiles))
@@ -179,7 +179,7 @@ testfiles := test/metadata.py test/lda.py
 txtzip := texts.zip
 datasetfiles := $(ldafiles) $(docfiles) $(testfiles) $(txtzip) 
 
-data/text/%.vert: %.wstate.vert $(randomseed)
+data/text/%.vert: %.wlda.vert $(randomseed)
 	test -d $(@D) || mkdir -p $(@D)
 	python3 scripts/shuffle_vert.py -r $(random) $< $@
 
