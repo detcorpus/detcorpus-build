@@ -7,7 +7,8 @@ vpath %.html $(SRC)
 vpath %.csv $(SRC)
 vpath %.epub $(SRC)
 vpath %.md $(SRC)
-_dummy := $(shell mkdir -p lda)
+EXPORT := export/vert
+_dummy := $(shell mkdir -p lda) $(shell mkdir -p export/vert)
 #
 # SETUP CREDENTIALS
 HOST=detcorpus
@@ -15,8 +16,6 @@ HOST=detcorpus
 TESTING=testing
 PRODUCTION=production
 ROLLBACK=rollback
-TESTPORT=8098
-PRODPORT=8099
 BUILT=built
 RSYNC=rsync -avP --stats -e ssh
 #
@@ -132,10 +131,10 @@ detcorpus.wlda.vert: $(vertfiles:.vert=.wlda.vert)
 	@true
 
 detcorpus-nonfiction.vert: detcorpus.wlda.vert
-	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $@
+	gawk -v mode=nonfic -f scripts/ficnonfic.gawk $< > $(EXPORT)/$@
 
 detcorpus-fiction.vert: detcorpus.wlda.vert
-	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $@
+	gawk -v mode=fic -f scripts/ficnonfic.gawk $< > $(EXPORT)/$@
 
 compile: $(corpora-vert)
 
@@ -164,7 +163,7 @@ ldadir:
 lda: $(patsubst %, lda/model%.mallet, $(numtopics)) | ldadir
 
 lda/labels%.txt: lda/summary%.txt
-	sort -nr -k2 -t"        " $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
+	sort -nr -k2 -t" " $< | gawk -F"\t" '{match($$3, /^([^ ]+ [^ ]+ [^ ]+)/, top); gsub(" ", "_", top[1]); printf "%d %d %s\n", NR, $$1, top[1]}' > $@
 
 %.wlda.vert: %.vert $(patsubst %, lda/labels%.txt, $(numtopics)) $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 	python3 scripts/addlda2vert.py -l $(patsubst %,lda%,$(numtopics)) -t $(patsubst %,lda/labels%.txt,$(numtopics)) -d $(patsubst %,lda/doc-topics%.txt,$(numtopics)) -i $< -o $@
@@ -207,10 +206,13 @@ test-lda: metadata.csv $(patsubst %,lda/doc-topics%.txt,$(numtopics))
 
 ## CLEANUP FOR BUILD
 
-clean: clean-converted
+clean: clean-converted clean-build clean-compiled
 
 clean-converted:
 	$(foreach f, $(vertfiles), rm -f $(f:.vert=.txt)$(NL))
 
 clean-build:
 	$(foreach f, $(vertfiles), rm -f $(f)$(NL))
+
+clean-compiled:
+	rm -f *.vert && rm -f *.vectors
